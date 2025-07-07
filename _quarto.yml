@@ -1,0 +1,6 @@
+project:
+  title: "ingredient_analysis"
+  execute-dir: project
+  output-dir: results
+editor: source
+
