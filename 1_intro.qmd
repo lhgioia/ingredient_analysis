@@ -1,7 +1,7 @@
 ---
 title: "Moisturizer Ingredient Analysis"
 subtitle: "Introduction"
-author: "Louis Gioia"
+author: "Louis Gioia, PhD"
 format: html
 editor_options: 
   chunk_output_type: console
@@ -38,34 +38,26 @@ The google sheet is imported using the [googlesheets4 R package](https://googles
 #| message: false
 
 # productSheet <- read_sheet("1LVIoYIZDoDtc26z5JMHpv_7a34aqSZwdFsazG8_JlfY")
-productSheet <- read.csv(paste0(here(), "/data/productSheet.csv"))
+# write.csv(productSheet, paste0(here(), "/data/productSheet.csv"), row.names = F)
+
+productSheet <- read.csv("./data/productSheet.csv")
 ```
 
 Here are the top few entries:
 ```{r}
 #| echo: false
 
-productHead <- head(productSheet, n = 5L)
-## very strange error where kable thinks there is an extra first column
-kable(productHead[,2:7])
+productHead <- kable(head(productSheet, n = 5L))
 ```
 
 Next, we loop through all of the INCIDecoder product URLs and grab the ingredient lists using the [rvest package](https://rvest.tidyverse.org/).
 ```{r}
 #| echo: false
 
-# # loop through products and grab ingredient lists
-# ingredientLists <- list()
-# for(i in productSheet$INCIDECODER_URL){
-#   productUrl <- paste0("https://incidecoder.com/products/", i)
-#   productHtml <- read_html(productUrl)
-#   productData <- html_table(productHtml)[[1]]$`Ingredient name`
-#   productName <- paste(productSheet[match(i, productSheet$INCIDECODER_URL), c("BRAND_NAME", "PRODUCT_NAME")],
-#                        collapse = " ")
-#   ingredientLists[[productName]] <- productData
-# }
+# source("./functions/createIngredientLists.R")
+# ingredientLists <- createIngredientLists(productSheet)
 
-ingredientLists <- readRDS(paste0(here(), "/data/ingredientLists"))
+ingredientLists <- readRDS("./data/ingredientLists")
 ```
 
 Here are the the first 5 ingredients from the first 3 products:
