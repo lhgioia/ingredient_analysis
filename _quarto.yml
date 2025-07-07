@@ -3,4 +3,10 @@ project:
   execute-dir: project
   output-dir: results
 editor: source
-
+format:
+  html:
+    toc: true
+    css: styles.css
+    theme:
+      dark: darkly
+      light: flatly
