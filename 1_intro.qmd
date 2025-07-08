@@ -12,11 +12,9 @@ editor_options:
 #| output: false
 
 ## load libraries
-library(here)
 library(googlesheets4)
 library(rvest)
 library(knitr)
-library(dplyr)
 library(ggplot2)
 library(stringr)
 ```
