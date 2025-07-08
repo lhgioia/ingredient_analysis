@@ -1,0 +1,158 @@
+---
+title: "Moisturizer Ingredient Analysis"
+subtitle: "Product Comparison"
+author: "Louis Gioia, PhD"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| echo: false
+#| output: false
+
+## load libraries
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+
+
+## load data
+productSheet <- read.csv("./data/productSheet.csv")
+ingredientListsClean <- readRDS("./data/ingredientListsClean")
+ingDf <- readRDS("./data/ingDf")
+```
+
+### Product correlation
+For a global view of correlation between products, here is an all by all correlation plot. Ingredients that are unique to a single moisturizer have been removed.
+\
+```{r echo=FALSE, fig.width=19, fig.height=19}
+# cor and corrplot want dependent variables as rows so we have to swap the dataframes we have been using
+ingSharedBy2 <- ingDf[which(rowSums(ingDf) > 1),]
+names(ingSharedBy2) <- paste(productSheet$BRAND_NAME, productSheet$PRODUCT_NAME, sep = " ")
+
+prodCor <-cor(ingSharedBy2, method = "kendall")
+corrplot(prodCor, 
+         type="upper", 
+         order="hclust",
+         tl.col = "gray20")
+```
+\
+There isn't a lot to see here. We are mostly getting clustering within brands.
+\
+
+### Product base correlation
+Let's see if there is correlation between the "base" ingredients of the moisturizers (defined as ingredients that are present in more than 10% of the products).
+\
+
+```{r echo=FALSE, fig.width=19, fig.height=19}
+# cor and corrplot want dependent variables as rows so we have to swap the dataframes we have been using
+ingSharedBy8 <- ingDf[which(rowSums(ingDf) > 7),]
+names(ingSharedBy8) <- paste(productSheet$BRAND_NAME, productSheet$PRODUCT_NAME, sep = " ")
+
+prodBaseCor <-cor(ingSharedBy8, method = "kendall")
+corrplot(prodBaseCor, 
+         type="upper", 
+         order="hclust",
+         tl.col = "gray20")
+```
+\
+We get some stronger clusters here. 
+
+### Finding similar products
+Let's get the top 5 most similar products for each product in our data set. 
+\
+```{r echo=FALSE}
+library(DT)
+
+## round correlation values
+prodCorRounded <- round(prodCor, 3)
+
+prodSearchDf <- data.frame(searchkey = paste(productSheet$BRAND_NAME, productSheet$PRODUCT_NAME),
+                           pricePerOz = paste0("$",
+                                              gsub(" ", "", 
+                                                   format(round(productSheet$PRICE/productSheet$SIZE, 2), nsmall = 2))))
+
+topCorDf <- NULL
+for(i in 1:nrow(prodSearchDf)){
+  topCorVec <- sort(prodCorRounded[which(rownames(prodCorRounded) == prodSearchDf$searchkey[i]),], decreasing = TRUE)[2:6]
+  
+  individualTopCorDf <- data.frame(searchkey = prodSearchDf$searchkey[i],
+                                   searchkey_price = prodSearchDf$pricePerOz[i],
+                                   similarity = topCorVec,
+                                   similar_products = names(topCorVec),
+                                   similar_product_price = prodSearchDf[match(names(topCorVec), 
+                                                                              prodSearchDf$searchkey),
+                                                                        "pricePerOz"],
+                                   row.names = NULL)
+  
+  topCorDf <- rbind(topCorDf, individualTopCorDf)
+}
+
+datatable(topCorDf,
+          rownames = FALSE,
+          options = list(
+            columnDefs = list(list(targets = c(1:4), searchable = FALSE)),
+            pageLength = 5))
+```
+\
+\
+```{r echo=FALSE}
+## show ingredient lists for similar products identified in corrplots
+pairs1 <- c("Drunk Elephant Lala Retro Whipped Cream", "CeraVe PM Facial Moisturizing Lotion")
+pairs2 <- c("Neutrogena Ultra Gentle Daily Facial Moisturizer", "Aveeno Daily Moisturizing Face Cream")
+pairs3 <- c("innisfree Green Tea Seed Hyaluronic Cream", "LANEIGE Water Bank Blue Hyaluronic Intensive Moisturizer")
+pairs4 <- c("Olay Super Cream with Sunscreen", "Olay Complete UV365 Daily Moisturizer with Sunscreen")
+
+
+generateIngredientComparisonTable <- function(productPair = NULL, ingredients = ingredientListsClean){
+  ## make sure longer ingredient list is first
+  if(length(ingredientListsClean[[productPair[2]]]) > length(ingredientListsClean[[productPair[1]]])){
+    productPair <- productPair[c(2,1)]
+  }
+  
+  ## create ingredient comparison dataframe from ingredient lists. fill out second ingredient list with dashes
+  ingredientComparison <- data.frame(ingredientListsClean[[productPair[1]]],
+                                   c(ingredientListsClean[[productPair[2]]],
+                                       rep("-", (length(ingredientListsClean[[productPair[1]]]) - 
+                                             length(ingredientListsClean[[productPair[2]]])))))
+  names(ingredientComparison) <- productPair
+  
+  ## create match columns for table coloring
+  ingredientMatches <- ingredientComparison %>% 
+    mutate(match1 = ifelse(ingredientComparison[,1] %in% ingredientComparison[,2], 1, 0)) %>%
+    mutate(match2 = ifelse(ingredientComparison[,2] %in% ingredientComparison[,1], 1, 0))
+  
+  ## create datatable
+  tableLength <- length(ingredientListsClean[[productPair[1]]])
+  comparisonDataTable <- datatable(ingredientMatches, options = list(
+        columnDefs = list(list(targets = c(2,3), visible = FALSE)),
+        pageLength = tableLength
+      ),
+      rownames = FALSE) %>% formatStyle(
+        productPair[1], 'match1',
+        backgroundColor = styleEqual(c(0, 1), c('white', '#ADD2C2'))
+        ) %>% formatStyle(
+        productPair[2], 'match2',
+        backgroundColor = styleEqual(c(0, 1), c('white', '#ADD2C2')))
+  
+  return(comparisonDataTable)
+}
+
+table1 <- generateIngredientComparisonTable(productPair = pairs1)
+table1
+
+table2 <- generateIngredientComparisonTable(productPair = pairs2)
+table2
+
+table3 <- generateIngredientComparisonTable(productPair = pairs3)
+table3
+
+table4 <- generateIngredientComparisonTable(productPair = pairs4)
+table4
+
+```
+\
+The Olay sunscreens are really interesting. They are one of the closest matches in our data set, but Olay Super Cream with Sunscreen is 10x the price of Olay Complete UV365 Daily Moisturizer with Sunscreen. What is going on there? Is it just vitamin C and a peptide that they are charging for?
+\
