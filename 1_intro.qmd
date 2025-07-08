@@ -1,6 +1,6 @@
 ---
 title: "Moisturizer Ingredient Analysis"
-subtitle: "Introduction"
+subtitle: "Getting Started"
 author: "Louis Gioia, PhD"
 format: html
 editor_options: 
@@ -83,7 +83,8 @@ waterNames <- gsub("[^ -~]+", "", waterNames)
 waterNames <- waterNames[-grep("Citrullus|Rosa|Vitis", waterNames)]
 waterCounts <- sort(table(waterNames), decreasing = TRUE)
 waterDf <- data.frame(waterCounts)
-waterDf <- waterDf %>% bind_rows(slice(., 11)) %>% slice(-11)
+## move La Roche-Posay water to the end
+waterDf <- waterDf[c(1:10, 12:13, 11),]
 waterDf$waterNames <- factor(waterDf$waterNames, levels = waterDf$waterNames)
 
 ggplot(waterDf, aes(waterNames, Freq)) +
@@ -108,19 +109,21 @@ Let's count how many unique ingredients we have after each cleaning step.
 ```{r}
 #| echo: false
 
-as.vector(do.call(c, ingredientLists, quote=T)) %>% unique %>% length %>% kable(col.names = "# of original ingredients", align = "l")
+source("./functions/countUniqueIngredients.R")
+source("./data/ingredientRegex.R")
 
-source(paste0(here(), "/data/ingredientRegex.R"))
-ingredientListsLowerCase <- lapply(ingredientLists, tolower)
-as.vector(do.call(c, ingredientListsLowerCase, quote=T)) %>% unique %>% length %>% kable(col.names = "# of lowercase ingredients", align = "l")
+countUniqueIngredients(ingredientLists = ingredientLists, title = "# of original ingredients")
 
-ingredientListsNoWeirdness <- lapply(ingredientListsLowerCase, str_replace_all, strangeCharactersRegex)
-as.vector(do.call(c, ingredientListsNoWeirdness, quote=T)) %>% unique %>% length %>% kable(col.names = "# of ingredients w/o strange characters", align = "l")
+ingredientListsUpperCase <- lapply(ingredientLists, toupper)
+countUniqueIngredients(ingredientLists = ingredientListsUpperCase, title = "# of uppercase ingredients")
 
-names(ingredientRegex) <- tolower(names(ingredientRegex))
-ingredientRegex <- tolower(ingredientRegex)
+ingredientListsNoWeirdness <- lapply(ingredientListsUpperCase, str_replace_all, strangeCharactersRegex)
+countUniqueIngredients(ingredientLists = ingredientListsNoWeirdness, title = "# of ingredients w/o strange characters")
+
+names(ingredientRegex) <- toupper(names(ingredientRegex))
+ingredientRegex <- toupper(ingredientRegex)
 ingredientListsClean <- lapply(ingredientListsNoWeirdness, str_replace_all, ingredientRegex)
-as.vector(do.call(c, ingredientListsClean, quote=T)) %>% unique %>% length %>% kable(col.names = "# of merged and cleaned ingredients", align = "l")
+countUniqueIngredients(ingredientLists = ingredientListsClean, title = "# of merged and cleaned ingredients")
 ```
 
 Now that we have cleaned our ingredient names and gone from 857 to 713 unique ingredients, we can do some actual analysis of the data.
