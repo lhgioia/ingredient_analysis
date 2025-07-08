@@ -1,0 +1,195 @@
+---
+title: "Moisturizer Ingredient Analysis"
+subtitle: "Ingredient Usage"
+author: "Louis Gioia, PhD"
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+```{r}
+#| echo: false
+#| output: false
+
+## load libraries
+library(knitr)
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+
+
+## load data
+productSheet <- read.csv("./data/productSheet.csv")
+ingRankDf <- readRDS("./data/ingRankDf")
+ingDf <- readRDS("./data/ingDf")
+prodDf <- readRDS("./data/prodDf")
+```
+
+### Ingredient prevalence
+
+What are the most and least common ingredients in our moisturizer dataset? Let's take a look at the distribution of how many products each ingredient is found in. 
+
+```{r echo=FALSE}
+ingCountDf <- data.frame(ingredient = row.names(ingDf),
+                         count = rowSums(ingDf), 
+                         row.names = NULL)
+
+ingCountSummary <- data.frame(minimum = min(ingCountDf$count),
+                              mean = mean(ingCountDf$count),
+                              median = median(ingCountDf$count),
+                              maximum = max(ingCountDf$count))
+
+kable(ingCountSummary)
+```
+
+Ok, the median is 1. That means most of the ingredients are found in only one product. That makes sense because we have 713 ingredients and 74 products. Let's try to visualize this distribution with a histogram.
+
+```{r echo=FALSE, warning=FALSE, fig.width=10, fig.height=7}
+ggplot(ingCountDf, aes(count)) +
+  geom_histogram(binwidth = 1) +
+  labs(title = "Histogram of Ingredient Prevalence",
+       x = "Number of products with each ingredient",
+       y = "Count") +
+  scale_x_continuous(breaks = seq(0, 75, 5)) +
+  scale_y_continuous(breaks = seq(0, 400, 100)) +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.title.x = element_text(size = 14),
+        axis.title.y = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        panel.grid.minor = element_blank())
+```
+
+Wow, the distribution is heavily skewed towards ingredients that appear in very few products. Here is a table, counting the ingredients with that are not present in many products:
+
+```{r echo=FALSE, fig.width=2}
+rareIngredientCounts <- NULL
+for(i in 1:5){
+  rareIngredientCounts <- c(rareIngredientCounts, nrow(ingCountDf[ingCountDf$count == i,]))
+}
+
+rareIngredientDf <- data.frame("count" = rareIngredientCounts, row.names = c("number of ingredients used in 1 product", paste("number of ingredients used in", 2:5, "products")))
+
+kable(rareIngredientDf, align = 'r', format = "html", table.attr = "style='width:40%;'")
+```
+\
+\
+That's 413/713 ingredients that are only in 1 product, and 629/713 that are in less than 6 of the products. We do, however, have some ingredients that are used in most of the moisturizer products.
+
+```{r echo=FALSE, warning=FALSE, fig.width=10, fig.height=9}
+ingCountSorted <- arrange(ingCountDf, count)
+
+ingCountTop <- ingCountSorted[(nrow(ingCountSorted)-30):nrow(ingCountSorted),]
+
+ingCountTop$ingredient <- factor(ingCountTop$ingredient,
+                                 levels = ingCountTop$ingredient)
+
+ingCountTop$percent <- 100*ingCountTop$count/nrow(productSheet)
+
+percentLabels <- function(x) {
+  paste0(x, "%")
+}
+
+ggplot(ingCountTop, aes(ingredient, percent)) +
+  geom_bar(stat="identity") +
+  labs(title = "Prevalence of 30 Most Common Ingredients",
+       x = "",
+       y = "Percentage of products") +
+  scale_y_continuous(breaks = seq(0, 100, 20),
+                     labels = percentLabels,
+                     sec.axis = dup_axis()) +
+  coord_flip() +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.title.x = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank())
+```
+
+It turns out that water and glycerin are used in almost all of the moisturizers.
+
+### Ingredient list position
+
+```{r echo=FALSE, warning=FALSE, fig.width=10, fig.height=9}
+ingRanks <- t(ingRankDf)
+rownames(ingRanks) <- NULL
+
+ingTop30 <- ingCountSorted[(nrow(ingCountSorted)-30):nrow(ingCountSorted), "ingredient"]
+
+ingRanksLongDf <- data.frame()
+for(i in ingTop30){
+  ingRanksLongDf <- rbind(ingRanksLongDf, 
+                          data.frame(ranks = ingRanks[,which(colnames(ingRanks) == i)],
+                                     ingredient = i))
+}
+
+ingForMeans <- ingRanks[, which(colnames(ingRanks) %in% ingTop30)]
+ingRankMeansSorted <- sort(colMeans(ingForMeans, na.rm = TRUE), decreasing = TRUE)
+
+ingRanksLongDf$ingredient <- factor(ingRanksLongDf$ingredient, levels = names(ingRankMeansSorted))
+
+ggplot(ingRanksLongDf, aes(ingredient, ranks)) + 
+  geom_boxplot() +
+  labs(title = "Ingredient List Position of 30 Most Common Ingredients",
+       x = "",
+       y = "Rank in ingredient list") +
+  scale_y_continuous(breaks = seq(0, 70, 10),
+                     sec.axis = dup_axis()) +
+  coord_flip() +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.title.x = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank())
+```
+
+
+```{r echo=FALSE, warning=FALSE, fig.width=10, fig.height=9}
+ingIn10Perc <- ingCountSorted[which(ingCountSorted$count > 7), "ingredient"]
+ingForMeans <- ingRanks[, which(colnames(ingRanks) %in% ingIn10Perc)]
+ingRankMeansSorted <- sort(colMeans(ingForMeans, na.rm = TRUE), decreasing = TRUE)
+
+ingRankMeansSortedTop30 <- ingRankMeansSorted[(length(ingRankMeansSorted)-30):length(ingRankMeansSorted)]
+
+ingRanksLongDf <- data.frame()
+for(i in names(ingRankMeansSortedTop30)){
+  ingRanksLongDf <- rbind(ingRanksLongDf, 
+                          data.frame(ranks = ingRanks[,which(colnames(ingRanks) == i)],
+                                     ingredient = i))
+}
+
+ingRanksLongDf$ingredient <- factor(ingRanksLongDf$ingredient, levels = names(ingRankMeansSortedTop30))
+
+ggplot(ingRanksLongDf, aes(ingredient, ranks)) + 
+  geom_boxplot() +
+  labs(title = "Position of 30 Highest Ranked Ingredients",
+       x = "",
+       y = "Rank in ingredient list") +
+  scale_y_continuous(breaks = seq(0, 70, 10),
+                     sec.axis = dup_axis()) +
+  coord_flip() +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 16, hjust = 0.5),
+        axis.title.x = element_text(size = 14),
+        axis.text = element_text(size = 12),
+        panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank())
+```
+\
+There is quite a bit of overlap between the most prevalent ingredients and the highest ranking ingredients. Maybe the "base" of all of these moisturizers isn't so complicated.
+Now, let's see if the use of these ingredients is correlated. We obviously expect water and glycerin to be weakly correlated with everything, but maybe there's more.
+\
+
+### Ingredient correlation
+```{r echo=FALSE, fig.width=19, fig.height=19}
+# cor and corrplot want dependent variables as rows so we have to swap the dataframes we have been using
+ingSharedBy12 <- prodDf[,which(colSums(prodDf) > 7)]
+
+ingCor <-cor(ingSharedBy12, method = "kendall")
+corrplot(ingCor, 
+         type="upper", 
+         order="hclust",
+         tl.col = "gray20")
+```
