@@ -1,0 +1,51 @@
+---
+title: Moisturizer Madness
+subtitle: Part 5
+author: Louis Gioia, PhD
+date: 2025-07-14
+date-format: long
+format: html
+editor_options: 
+  chunk_output_type: console
+---
+
+### Cosmetics labeling authorities
+In the United States, cosmetics labeling is regulated by the FDA. The authority
+to regulate cosmetics was granted by Congress in 1938 through the Federal Food, 
+Drug, and Cosmetic Act. Under the act, the FDA does not approve cosmetics, like 
+it does for drugs, but only regulates cosmetics. The differences between drugs 
+and cosmetics are defined in the legislation.
+
+In 1966, the Fair Packaging and Labeling Act gave the FDA authority to regulate 
+cosmetic labeling, and in 1974, the FDA added labeling requirements for 
+cosmetics to Title 21 of the Code of Federal Regulations. What was going on in 
+the 8 years between? They were working on it, I guess.
+
+It is difficult to piece together everything that was going on over 50 years ago,
+but it seems that everyone thought that a cosmetic labeling requirement was a 
+big deal. After going so long without having to label what was inside their 
+products, asking companies to list all of the ingredients appeared to be a win 
+for consumers. 
+
+:::{.img-float}
+![](./images/CTFA-FDA.png){width=30% fig-align="right" style="float: right; margin: 10px;"}
+:::
+
+There is not much historical information available about what was going on 
+behind the scenes, but a new player emerged in the regulatory code---the 
+Cosmetic, Toiletry and Fragrance Association, Inc. (CTFA). The CTFA's Cosmetic 
+Ingredient Dictionary is listed as the 
+[primary source](https://www.ecfr.gov/current/title-21/part-701/section-701.3#p-701.3(c)(2)) 
+for ingredient names.
+
+The CTFA, now called the Personal Care Products Council (PCPC), is a trade 
+association representing cosmetics and personal care products companies. It is 
+founded and funded by cosmetics companies with dozens of big brand executives on 
+its board of directors. As a nonprofit organization, it is required to report 
+financial information, and in 2023, it made 
+[$22.4 million in revenue](https://projects.propublica.org/nonprofits/organizations/131390920) 
+and paid its CEO $1.4 million.
+
+Basically, the PCPC lobbied themselves into being responsible for the dictionary 
+of cosmetic ingredients that the FDA requires cosmetics companies to use for 
+product labels. 
