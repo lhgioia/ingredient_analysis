@@ -23,24 +23,108 @@ library(stringr)
 
 ## Introduction
 ### Project goals
-The goal of this project is to obtain a global view of what skincare companies are putting in their facial moisturizers. Most large manufacturers of cosmetics have a moisturizer on the market. You can go through the ingredient lists one by one, but with dozens of ingredients in each list, keeping track of what is in each moisturizer is incredibly difficult. What if we could look at all of the ingredient lists at once? We might be better able to tease out similarities and differences. We might be able to see which ingredients are important and which ones are just fluff. We might also be able to achieve the holy grail of skincare -- finding dupes for expensive products so that we don't waste our money.
+The goal of this project is to obtain a global view of what skincare companies 
+are putting in their facial moisturizers. Most large manufacturers of cosmetics 
+have a moisturizer on the market. You can go through the ingredient lists one 
+by one, but with dozens of ingredients in each list, keeping track of what is 
+in each moisturizer is incredibly difficult. What if we could look at all of 
+the ingredient lists at once? We might be better able to tease out similarities 
+and differences. We might be able to see which ingredients are important and 
+which ones are just fluff. We might also be able to achieve the holy grail of 
+skincare -- finding dupes for expensive products so that we don't waste our 
+money.
 
-_Disclaimer:_ I am a scientist who is not happy with the state of the skincare industry. I am pretty sure that skincare companies are just making stuff up and always have been. They are not doing much research (outside of marketing and maybe safety testing). They are more interested in combining different goops and gunks than really inventing anything new. Their main focus is getting people to buy their products. So they put all of their effort and money into marketing and copying the things that other people have successfully marketed.
+_Disclaimer:_ I am a scientist who is not happy with the state of the skincare 
+industry. I am pretty sure that skincare companies are just making stuff up and 
+always have been. They are not doing much research (outside of marketing and 
+maybe safety testing). They are more interested in combining different goops 
+and gunks than actually inventing anything new. Their main focus is getting 
+people to buy their products. So they put all of their effort and money into 
+marketing and copying the things that other people have successfully marketed.
 
-### Product label authorities
-Who decided how to label skincare products? In the United States, cosmetics labeling is regulated by the FDA.
+### Cosmetics labeling regulations
+:::{.img-float}
+![](./images/fda.png){width=25% fig-align="right" style="float: right; margin: 10px;"}
+:::
+
+In the United States, cosmetics labeling is regulated by the FDA. The authority
+to regulate cosmetics was granted by Congress in 1938 through the Federal Food, 
+Drug, and Cosmetic Act. Under the act, the FDA only approves cosmetics. It does
+not regulate them, like it does for drugs. The differences between drugs and 
+cosmetics are defined in the legislation.
+
+In 1966, the Fair Packaging and Labeling Act gave the FDA authority to regulate 
+cosmetic labeling, and in 1974, the FDA added labeling requirements for 
+cosmetics to Title 21 of the Code of Federal Regulations in section 701.3. The 
+guidelines for labeling are simple---maybe a little too simple. In 1974, it was 
+a big deal to just have ingredient names on the products, but the for this 
+project, it would be nice if the rules were stricter and more detailed.
 
 ### Ingredient list rules
-What are the rules for ingredient lists?
+The regulations begin by stating that the name of each ingredient should be 
+listed in descending order of predominance. However, an alternative scheme for 
+grouping ingredients is provided and is the main method used by modern 
+cosmetics companies.
+
+Ingredients may be grouped and the groups listed in the following manner and 
+order:
+
+ * Ingredients, other than color additives, present at a concentration greater 
+ than 1 percent, in descending order of predominance; followed by
+ 
+ * Ingredients, other than color additives, present at a concentration of not 
+ more than 1 percent, without respect to order of predominance; followed by
+ 
+ * Color additives, without respect to order of predominance.
+ 
+This means that ingredients at less than 1% concentration do not have to be 
+listed in any order. In practice, this allows companies to move trendy 
+ingredients up in the list and synthetic-sounding chemical names lower in the 
+list. 
+
+The regulatory code also says that companies should prioritize the use of names 
+from the Cosmetic Ingredient Dictionary, which is written by the Cosmetic, 
+Toiletry and Fragrance Association. This trade association has changed their 
+name to the Personal Care Products Council (PCPC) and now publishes their 
+database of ingredient names online. They developed the International 
+Nomenclature Cosmetic Ingredient (INCI) system for their ingredient dictionary 
+in 1973, in preparation for the FDA labeling requirements. The INCI system 
+standardizes ingredient names, but as we will see, cosmetics companies still 
+love to add their own twists.
 
 ### Moisturizer basics
-What is a moisturizer supposed to do?
+Everyone knows that a moisturizer is supposed to moisturize your skin, but what 
+are the ingredients actually doing?
+
+There are four main components that are usually included in moisturizers:
+
+ 1. Water---Duh. This is the main moisturizing ingredient. So why not just 
+ splash water on your face? Moisturizers contain other ingredients to both hold 
+ onto water and trap it in your skin.
+ 
+ 1. Occlusives---Oil-based molecules that provide a barrier to stop the water 
+ from evaporating too quickly.
+ 
+ 1. Humectants---Molecules that like water and will hold onto it to keep it on 
+ the skin.
+ 
+ 1. Emollients---Molecules that fill in cracks in the skin to make it feel 
+ smoother.
 
 ## Getting the data
 
-First, we have to get some data. I got the best-seller results from [Target](https://www.target.com/) and [Sephora](https://www.sephora.com/), and created a [google sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vS4wAroj1XvB4aiuOg97IdS6xNd2x0wsylwXOYZZlCAysx3n5SA9Fi3IcLrbWGe_e7cuhzW2_fOl8qj/pubhtml) with each product's brand name, product name, price, size, and product link on [INCIDecoder](https://www.incidecoder.com), which is where we will be scraping the ingredient lists. Sadly, the Target and Sephora websites are difficult to scrape. I had to gather all of the data by hand :( I might try to implement that in the future with [RSelenium](https://docs.ropensci.org/RSelenium/). 
+OK, enough background, let's get our hands on some data. I got the best-seller 
+results from [Target](https://www.target.com/) and 
+[Sephora](https://www.sephora.com/), and created a 
+[google sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vS4wAroj1XvB4aiuOg97IdS6xNd2x0wsylwXOYZZlCAysx3n5SA9Fi3IcLrbWGe_e7cuhzW2_fOl8qj/pubhtml) 
+with each product's brand name, product name, price, size, and product link on 
+[INCIDecoder](https://www.incidecoder.com), which is where we will be scraping 
+the ingredient lists. Sadly, the Target and Sephora websites are difficult to 
+scrape. I had to gather all of the data by hand :( I might try to implement 
+that in the future with [RSelenium](https://docs.ropensci.org/RSelenium/). 
 
-The google sheet is imported using the [googlesheets4 R package](https://googlesheets4.tidyverse.org/).
+The google sheet is imported using the 
+[googlesheets4 R package](https://googlesheets4.tidyverse.org/).
 ```{r}
 #| echo: false
 #| message: false
@@ -58,7 +142,8 @@ Here are the top few entries:
 kable(head(productSheet, n = 5L))
 ```
 
-Next, we loop through all of the INCIDecoder product URLs and grab the ingredient lists using the [rvest package](https://rvest.tidyverse.org/).
+Next, we loop through all of the INCIDecoder product URLs and grab the 
+ingredient lists using the [rvest package](https://rvest.tidyverse.org/).
 ```{r}
 #| echo: false
 
@@ -75,7 +160,11 @@ Here are the the first 5 ingredients from the first 3 products:
 kable(sapply(ingredientLists[1:3], head, 5))
 ```
 
-As you might notice. We have some problems with how ingredients are labeled. The main ingredient in each of those products is water. Of course, these companies can't just call it water. They have to be special and call it "Aqua," or "Eau," or "Purified." And don't get me started on "La Roche-Posay Prebiotic Thermal Water."
+As you might notice. We have some problems with how ingredients are labeled. 
+The main ingredient in each of those products is water. Of course, these 
+companies can't just call it water. They have to be special and call it "Aqua," 
+or "Eau," or "Purified." And don't get me started on "La Roche-Posay Prebiotic 
+Thermal Water."
 
 ## Water is water, right?
 
@@ -110,7 +199,11 @@ ggplot(waterDf, aes(waterNames, Freq)) +
         panel.grid.major.x = element_blank())
 ```
 
-We will need to do a lot of data cleaning in order to analyze any of these ingredient lists. I will spare you most of the details. Briefly, I converted all of the ingredient names to lowercase, removed unnecessary characters, and merged many ingredients by hand (really I just used a bunch of regular expressions.)
+We will need to do a lot of data cleaning in order to analyze any of these 
+ingredient lists. I will spare you most of the details. Briefly, I converted 
+all of the ingredient names to lowercase, removed unnecessary characters, and 
+merged many ingredients by hand (really I just used a bunch of regular 
+expressions.)
 
 Let's count how many unique ingredients we have after each cleaning step.
 
@@ -123,21 +216,30 @@ Let's count how many unique ingredients we have after each cleaning step.
 source("./functions/countUniqueIngredients.R")
 source("./data/ingredientRegex.R")
 
-countUniqueIngredients(ingredientLists = ingredientLists, title = "# of original ingredients")
+countUniqueIngredients(ingredientLists = ingredientLists, 
+                       title = "# of original ingredients")
 
 ingredientListsUpperCase <- lapply(ingredientLists, toupper)
-countUniqueIngredients(ingredientLists = ingredientListsUpperCase, title = "# of uppercase ingredients")
+countUniqueIngredients(ingredientLists = ingredientListsUpperCase, 
+                       title = "# of uppercase ingredients")
 
-ingredientListsNoWeirdness <- lapply(ingredientListsUpperCase, str_replace_all, strangeCharactersRegex)
-countUniqueIngredients(ingredientLists = ingredientListsNoWeirdness, title = "# of ingredients w/o strange characters")
+ingredientListsNoWeirdness <- lapply(ingredientListsUpperCase, 
+                                     str_replace_all, 
+                                     strangeCharactersRegex)
+countUniqueIngredients(ingredientLists = ingredientListsNoWeirdness, 
+                       title = "# of ingredients w/o strange characters")
 
 names(ingredientRegex) <- toupper(names(ingredientRegex))
 ingredientRegex <- toupper(ingredientRegex)
-ingredientListsClean <- lapply(ingredientListsNoWeirdness, str_replace_all, ingredientRegex)
-countUniqueIngredients(ingredientLists = ingredientListsClean, title = "# of merged and cleaned ingredients")
+ingredientListsClean <- lapply(ingredientListsNoWeirdness, 
+                               str_replace_all, 
+                               ingredientRegex)
+countUniqueIngredients(ingredientLists = ingredientListsClean, 
+                       title = "# of merged and cleaned ingredients")
 
 ## save cleaned ingredient lists
 saveRDS(ingredientListsClean, "./data/ingredientListsClean")
 ```
 
-Now that we have cleaned our ingredient names and gone from 857 to 713 unique ingredients, we can do some actual analysis of the data.
+Now that we have cleaned our ingredient names and gone from 857 to 713 unique 
+ingredients, we can do some actual analysis of the data.
