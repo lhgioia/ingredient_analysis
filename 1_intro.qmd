@@ -57,8 +57,8 @@ In 1966, the Fair Packaging and Labeling Act gave the FDA authority to regulate
 cosmetic labeling, and in 1974, the FDA added labeling requirements for 
 cosmetics to Title 21 of the Code of Federal Regulations in section 701.3. The 
 guidelines for labeling are simple---maybe a little too simple. In 1974, it was 
-a big deal to just have ingredient names on the products, but the for this 
-project, it would be nice if the rules were stricter and more detailed.
+a big deal to just have ingredient names on the products, but for this project, 
+it would be nice if the rules were stricter and more detailed.
 
 ### Ingredient list rules
 The regulations begin by stating that the name of each ingredient should be 
@@ -85,12 +85,19 @@ list.
 The regulatory code also says that companies should prioritize the use of names 
 from the Cosmetic Ingredient Dictionary, which is written by the Cosmetic, 
 Toiletry and Fragrance Association. This trade association has changed their 
-name to the Personal Care Products Council (PCPC) and now publishes their 
-database of ingredient names online. They developed the International 
-Nomenclature Cosmetic Ingredient (INCI) system for their ingredient dictionary 
-in 1973, in preparation for the FDA labeling requirements. The INCI system 
-standardizes ingredient names, but as we will see, cosmetics companies still 
-love to add their own twists.
+name to the Personal Care Products Council (PCPC) and now requires a 
+subscription to access their online database of ingredient names. They developed
+the International Nomenclature Cosmetic Ingredient (INCI) system for their 
+ingredient dictionary in 1973, in preparation for the FDA labeling requirements.
+The INCI system standardizes ingredient names, but as we will see, cosmetics 
+companies still love to add their own twists.
+
+I do not like the PCPC, but I will save my rant for another post. Let's get back
+to moisturizers.
+
+:::{}
+![](./images/isThisRegCapture.jpg){width=40% fig-align="center"}
+:::
 
 ### Moisturizer basics
 Everyone knows that a moisturizer is supposed to moisturize your skin, but what 
@@ -105,7 +112,7 @@ There are four main components that are usually included in moisturizers:
  1. Occlusives---Oil-based molecules that provide a barrier to stop the water 
  from evaporating too quickly.
  
- 1. Humectants---Molecules that like water and will hold onto it to keep it on 
+ 1. Humectants---Molecules that like water and will hold onto it to keep it in 
  the skin.
  
  1. Emollients---Molecules that fill in cracks in the skin to make it feel 
@@ -120,8 +127,7 @@ results from [Target](https://www.target.com/) and
 with each product's brand name, product name, price, size, and product link on 
 [INCIDecoder](https://www.incidecoder.com), which is where we will be scraping 
 the ingredient lists. Sadly, the Target and Sephora websites are difficult to 
-scrape. I had to gather all of the data by hand :( I might try to implement 
-that in the future with [RSelenium](https://docs.ropensci.org/RSelenium/). 
+scrape, so I had to gather all of the data by hand. 🙁  
 
 The google sheet is imported using the 
 [googlesheets4 R package](https://googlesheets4.tidyverse.org/).
@@ -141,7 +147,7 @@ Here are the top few entries:
 
 kable(head(productSheet, n = 5L))
 ```
-
+\
 Next, we loop through all of the INCIDecoder product URLs and grab the 
 ingredient lists using the [rvest package](https://rvest.tidyverse.org/).
 ```{r}
@@ -159,14 +165,17 @@ Here are the the first 5 ingredients from the first 3 products:
 
 kable(sapply(ingredientLists[1:3], head, 5))
 ```
-
+\
 As you might notice. We have some problems with how ingredients are labeled. 
-The main ingredient in each of those products is water. Of course, these 
-companies can't just call it water. They have to be special and call it "Aqua," 
-or "Eau," or "Purified." And don't get me started on "La Roche-Posay Prebiotic 
-Thermal Water."
+The main ingredient almost all of the moisturizers is water, but in our first 
+three products, there are three different names for water. This irregular naming
+is going to be our first big hurdle to overcome with this project.
 
 ## Water is water, right?
+
+Yes, it is just water. Most skincare companies are using purified and deionized 
+water in their formulations, because they don't want impurities to interfere 
+with the other ingredients in the product.
 
 How many names for water can there be?
 ```{r}
@@ -198,16 +207,35 @@ ggplot(waterDf, aes(waterNames, Freq)) +
         panel.grid.minor = element_blank(),
         panel.grid.major.x = element_blank())
 ```
+\
+There are two reasons for all of these different names for water in the 
+ingredient lists. The first is that the PCPC's INCI dictionary allows two terms 
+for water: "Water" and "Aqua." This leniency is how we get just about every 
+possible combination of water and aqua in our dataset. Additionally, the INCI 
+standard does not identify modifiers for the type of water, so companies are 
+free to add "Purified," "Distilled," or "La Roche-Posay Prebiotic Thermal."
+
+The other reason for these different names for the simplest ingredient is that 
+the skincare companies want to sound fancy so people will buy their products. 
+Maybe it works. I don't know. I'm not a marketer. 
+
+_As a quick aside, while La Roche-Posay might have some decent formulations, I 
+cannot stand the pseudoscience associated with the brand. They really push their 
+special water from a hot spring in France, which was already a spa by the 17th 
+century. I'm sorry, but I don't want skincare from an era when humors and 
+alchemy were state-of-the-art medicine. I also do not like their claims about 
+balancing the microbiome. Latching onto scientific discoveries that are not 
+fully understood is a classic snake oil tactic._
+
+## Cleaning up
 
 We will need to do a lot of data cleaning in order to analyze any of these 
 ingredient lists. I will spare you most of the details. Briefly, I converted 
 all of the ingredient names to lowercase, removed unnecessary characters, and 
-merged many ingredients by hand (really I just used a bunch of regular 
-expressions.)
+merged many ingredients by hand using a bunch of regular 
+expressions.
 
 Let's count how many unique ingredients we have after each cleaning step.
-
-## Cleaning up
 
 ```{r}
 #| echo: false
@@ -240,6 +268,12 @@ countUniqueIngredients(ingredientLists = ingredientListsClean,
 ## save cleaned ingredient lists
 saveRDS(ingredientListsClean, "./data/ingredientListsClean")
 ```
+\
+11 ingredient names were merged after capitalization was standardized. 39 
+ingredient names had random characters like asterisks, plus signs, and new line 
+characters. 94 ingredient names were merged by going through all of the names 
+and fixing small formatting variations.
 
 Now that we have cleaned our ingredient names and gone from 857 to 713 unique 
-ingredients, we can do some actual analysis of the data.
+ingredients, we can finally do some actual analysis of the data, but I will 
+save that for the next post.
